@@ -1,3 +1,9 @@
+This is a fork of Flask-User starter app v1.6 implementation of live video stream.
+Opencv is required and installation is now very simplified.
+on the command prompt or terminal, type
+pip install opencv-contrib-python
+python version v3.6.8 but should surely work with any other version 3
+
 # Flask-User starter app v1.0
 
 This code base serves as starting point for writing your next Flask application.
