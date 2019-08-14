@@ -1,0 +1,4 @@
+Remove date from the admin interface and the user interface
+Make registration only by admin
+Then work on saving videos
+Face recognition
