@@ -22,6 +22,43 @@ main_blueprint = Blueprint('main', __name__, template_folder='templates')
 @main_blueprint.route('/record')
 @login_required
 def gen_record():
+    import numpy as np
+    import cv2
+    from datetime import datetime
+    import uuid
+
+    now = datetime.now()
+    unique_filename = str(now.year) + "_" + str(now.month) + "_" + str(now.day) + "_" + str(now.hour) + "_" + str(now.minute) + "_" + str(now.second) #dt_object #str(uuid.uuid4())
+
+    cap = cv2.VideoCapture(0)
+    # Define the codec and create VideoWriter object
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    out = cv2.VideoWriter('videos/record_' + str(unique_filename) +'.avi',fourcc, 20.0, (640,480))
+    while(cap.isOpened()):
+      ret, frame = cap.read()
+      if ret==True:
+        frame = cv2.flip(frame,0)
+        # write the flipped frame
+        out.write(frame)
+        #cv2.imshow('frame',frame)
+        ret, buffer = cv2.imencode('.jpg', frame)
+        frame = buffer.tobytes()
+        yield (b'--frame\r\n'
+                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+          break
+      else:
+        break
+    # Release everything if job is finished
+    cap.release()
+    out.release()
+    cv2.destroyAllWindows()
+
+'''
+@main_blueprint.route('/record')
+@login_required
+def gen_record():
     # Create a VideoCapture object
     cap = cv2.VideoCapture(0)
 
@@ -35,7 +72,7 @@ def gen_record():
     frame_height = int(cap.get(4))
 
     # Define the codec and create VideoWriter object.The output is stored in 'outpy.avi' file.
-    out = cv2.VideoWriter('outpy.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 10, (frame_width,frame_height))
+    out = cv2.VideoWriter('outpy.mp4',cv2.VideoWriter_fourcc('M','J','P','G'), 10, (frame_width,frame_height))
 
     while(True):
       ret, frame = cap.read()
@@ -64,7 +101,7 @@ def gen_record():
 
     # Closes all the frames
     cv2.destroyAllWindows()
-
+'''
 @login_required
 def gen_frames(number = 0): #generate frame by frame from camera
     '''
@@ -108,9 +145,9 @@ def camera2():
 @login_required
 def camera1():
     """Video streaming route. Put this in the src attribute of an img tag."""
-    return Response(gen_frames(),
-                    mimetype='multipart/x-mixed-replace; boundary=frame')
-    #return render_template('main/index1.html')
+    #return Response(gen_frames(),
+                    #mimetype='multipart/x-mixed-replace; boundary=frame')
+    return render_template('main/index1.html')
 
 
 @main_blueprint.route('/double_cam.html')
