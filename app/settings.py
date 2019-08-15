@@ -14,15 +14,6 @@ CSRF_ENABLED = True
 # Flask-SQLAlchemy settings
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-# Flask-Mail settings
-'''
-MAIL_USERNAME =           os.getenv('MAIL_USERNAME',        'bonsoirval@gmail.com')
-MAIL_PASSWORD =           os.getenv('MAIL_PASSWORD',        'nuhTMX6z')
-MAIL_DEFAULT_SENDER =     os.getenv('MAIL_DEFAULT_SENDER',  '"TestApp" <noreply@example.com>')
-MAIL_SERVER =             os.getenv('MAIL_SERVER',          'smtp.gmail.com')
-MAIL_PORT =           int(os.getenv('MAIL_PORT',            '465'))
-MAIL_USE_SSL =            os.getenv('MAIL_USE_SSL',         True)
-'''
 
 # Flask-User settings
 USER_APP_NAME = APP_NAME

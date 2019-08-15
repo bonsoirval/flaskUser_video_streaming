@@ -13,131 +13,85 @@ from app.models.user_models import UserProfileForm
 #For camera and streaming
 from flask import render_template, Response
 import cv2
+import glob
+import os
 
 #For unique file name
 import uuid
 
 main_blueprint = Blueprint('main', __name__, template_folder='templates')
 
-@main_blueprint.route('/record')
+
+@main_blueprint.route('/play_video/<video>')
 @login_required
-def gen_record():
-    import numpy as np
-    import cv2
-    from datetime import datetime
-    import uuid
-
-    now = datetime.now()
-    unique_filename = str(now.year) + "_" + str(now.month) + "_" + str(now.day) + "_" + str(now.hour) + "_" + str(now.minute) + "_" + str(now.second) #dt_object #str(uuid.uuid4())
-
-    cap = cv2.VideoCapture(0)
-    # Define the codec and create VideoWriter object
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    out = cv2.VideoWriter('videos/record_' + str(unique_filename) +'.avi',fourcc, 20.0, (640,480))
-    while(cap.isOpened()):
-      ret, frame = cap.read()
-      if ret==True:
-        frame = cv2.flip(frame,0)
-        # write the flipped frame
-        out.write(frame)
-        #cv2.imshow('frame',frame)
-        ret, buffer = cv2.imencode('.jpg', frame)
-        frame = buffer.tobytes()
-        yield (b'--frame\r\n'
-                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
-
+def play_video(video):
+    video_file = dirpath = os.getcwd() + '/videos/' + video
+    play_videoFile(video_file,mirror=False)
+    '''print("The video is : " + video)
+    cap = cv2.VideoCapture('video')
+    while (cap.isOpened()):
+        ret, frame = cap.read()
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        cv2.imshow('frame', gray)
         if cv2.waitKey(1) & 0xFF == ord('q'):
-          break
-      else:
-        break
-    # Release everything if job is finished
-    cap.release()
-    out.release()
-    cv2.destroyAllWindows()
-
-'''
-@main_blueprint.route('/record')
-@login_required
-def gen_record():
-    # Create a VideoCapture object
-    cap = cv2.VideoCapture(0)
-
-    # Check if camera opened successfully
-    if (cap.isOpened() == False):
-      print("Unable to read camera feed")
-
-    # Default resolutions of the frame are obtained.The default resolutions are system dependent.
-    # We convert the resolutions from float to integer.
-    frame_width = int(cap.get(3))
-    frame_height = int(cap.get(4))
-
-    # Define the codec and create VideoWriter object.The output is stored in 'outpy.avi' file.
-    out = cv2.VideoWriter('outpy.mp4',cv2.VideoWriter_fourcc('M','J','P','G'), 10, (frame_width,frame_height))
-
-    while(True):
-      ret, frame = cap.read()
-
-      if ret == True:
-
-        # Write the frame into the file 'output.avi'
-        out.write(frame)
-
-        # Display the resulting frame
-        #cv2.imshow('frame',frame)
-        return Response(gen_frames(1),
-                mimetype='multipart/x-mixed-replace; boundary=frame')
-
-        # Press Q on keyboard to stop recording
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-          break
-
-      # Break the loop
-      else:
-        break
-
-    # When everything done, release the video capture and video write objects
-    cap.release()
-    out.release()
-
-    # Closes all the frames
-    cv2.destroyAllWindows()
-'''
-@login_required
-def gen_frames(number = 0): #generate frame by frame from camera
-    '''
-    # Define the codec and create VideoWriter object.The output is stored in 'outpy.avi' file.
-    # Define the fps to be equal to 10. Also frame size is passed.
-    unique_filename = str(uuid.uuid4())
-    out = cv2.VideoWriter('outpy.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 10, (frame_width,frame_height))
-    '''
-    #unique_filename = 'surveillannce' + str(uuid.uuid4())
-    #out = cv2.VideoWriter('unique_filename.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 10, (frame_width,frame_height))
-
-    camera = cv2.VideoCapture(0)   #webcam
-    if number == 0:
-        pass # do nothing
-    else:
-        camera = cv2.VideoCapture(1)   #external camera
-
-    while True:
-        #Capture frame-by-frame
-        success, frame = camera.read()
-        if not success:
             break
-        else:
-            ret, buffer = cv2.imencode('.jpg', frame)
-            frame = buffer.tobytes()
-            yield (b'--frame\r\n'
-                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
+    cap.release()
+    cv2.destroyAllWindows()
+
+    return 1
+    '''
+
+def play_videoFile(filePath,mirror=False):
+
+    cap = cv2.VideoCapture(filePath)
+    cv2.namedWindow('Video Life2Coding',cv2.WINDOW_AUTOSIZE)
+    while True:
+        ret_val, frame = cap.read()
+
+        if mirror:
+            frame = cv2.flip(frame, 1)
+
+        cv2.imshow('Video Life2Coding', frame)
+
+        if cv2.waitKey(1) == 27:
+            break  # esc to quit
+
+    cv2.destroyAllWindows()
+
+#View previously recorded videos
+@main_blueprint.route('/list_recorded_videos')
+@login_required
+def list_recorded_videos():
+    import platform
+    operating_system = platform.system()
+
+    if operating_system == 'Linux':
+        dirpath = os.getcwd() + '/videos' #get the video directory or folder
+
+        files = next(os.walk(dirpath))[2]
+#        print(files.str())
+        #files = dirpath + '/videos'
+        """List recorded videos."""
+        return render_template('main/list_recorded_videos.html', files = files, dirpath = dirpath)
+
+
+
+    elif operating_system == 'Windows':
+        print("Windows OS")
+
+    else:
+        print("Unsupported Operation System")
+
+
 
 # The Home page is accessible to anyone
 @main_blueprint.route('/camera2')
 @login_required
 def camera2():
     """Video streaming route. Put this in the src attribute of an img tag."""
-    return render_template('main/index.html')
-    #return Response(gen_frames(1),
-    #                mimetype='multipart/x-mixed-replace; boundary=frame')
+    #return render_template('main/index.html')
+    return Response(gen_record2(),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
 # The Home page is accessible to anyone
@@ -145,9 +99,9 @@ def camera2():
 @login_required
 def camera1():
     """Video streaming route. Put this in the src attribute of an img tag."""
-    #return Response(gen_frames(),
-                    #mimetype='multipart/x-mixed-replace; boundary=frame')
-    return render_template('main/index1.html')
+    return Response(gen_record(),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
+    #return render_template('main/index1.html')
 
 
 @main_blueprint.route('/double_cam.html')
@@ -199,5 +153,98 @@ def user_profile_page():
     # Process GET or invalid POST
     return render_template('main/user_profile_page.html',
                            form=form)
+
+@main_blueprint.route('/record')
+@login_required
+def gen_record():
+    import numpy as np
+    import cv2
+    from datetime import datetime
+    import uuid
+
+    now = datetime.now()
+    unique_filename = str(now.year) + "_" + str(now.month) + "_" + str(now.day) + "_" + str(now.hour) + "_" + str(now.minute) + "_" + str(now.second) #dt_object #str(uuid.uuid4())
+
+    cap = cv2.VideoCapture(0)
+
+    # Define the codec and create VideoWriter object
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    out = cv2.VideoWriter('videos/record_' + str(unique_filename) +'.avi',fourcc, 20.0, (640,480))
+    while(cap.isOpened()):
+      ret, frame = cap.read()
+      if ret==True:
+        frame = cv2.flip(frame,0)
+        # write the flipped frame
+        out.write(frame)
+        cv2.imshow('Live Stream Video',frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+          break
+      else:
+        break
+    # Release everything if job is finished
+    cap.release()
+    out.release()
+    cv2.destroyAllWindows()
+
+@main_blueprint.route('/record')
+@login_required
+def gen_record2():
+    import numpy as np
+    import cv2
+    from datetime import datetime
+    import uuid
+
+    now = datetime.now()
+    unique_filename = str(now.year) + "_" + str(now.month) + "_" + str(now.day) + "_" + str(now.hour) + "_" + str(now.minute) + "_" + str(now.second) #dt_object #str(uuid.uuid4())
+
+    cap = cv2.VideoCapture(0)
+
+    # Define the codec and create VideoWriter object
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    out = cv2.VideoWriter('videos/record_' + str(unique_filename) +'.avi',fourcc, 20.0, (640,480))
+    while(cap.isOpened()):
+      ret, frame = cap.read()
+      if ret==True:
+        frame = cv2.flip(frame,0)
+        # write the flipped frame
+        out.write(frame)
+        cv2.imshow('Live Stream Video',frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+          break
+      else:
+        break
+    # Release everything if job is finished
+    cap.release()
+    out.release()
+    cv2.destroyAllWindows()
+
+@login_required
+def gen_frames(number = 0): #generate frame by frame from camera
+    '''
+    # Define the codec and create VideoWriter object.The output is stored in 'outpy.avi' file.
+    # Define the fps to be equal to 10. Also frame size is passed.
+    unique_filename = str(uuid.uuid4())
+    out = cv2.VideoWriter('outpy.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 10, (frame_width,frame_height))
+    '''
+    #unique_filename = 'surveillannce' + str(uuid.uuid4())
+    #out = cv2.VideoWriter('unique_filename.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 10, (frame_width,frame_height))
+
+    camera = cv2.VideoCapture(0)   #webcam
+    if number == 0:
+        pass # do nothing
+    else:
+        camera = cv2.VideoCapture(1)   #external camera
+
+    while True:
+        #Capture frame-by-frame
+        success, frame = camera.read()
+        if not success:
+            break
+        else:
+            ret, buffer = cv2.imencode('.jpg', frame)
+            frame = buffer.tobytes()
+            yield (b'--frame\r\n'
+                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
+
 if __name__ == '__main__':
     app.run(host='127.0.0.1')

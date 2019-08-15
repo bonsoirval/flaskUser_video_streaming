@@ -1,0 +1,26 @@
+{% extends "main/main_base.html" %}  {# main/main_base.html extends layout.html #}
+
+{% block content %}
+<!--div class="container center">
+    <div class="row">
+        <div class="col-lg-8  offset-lg-2">
+            <h3 class="mt-5">Live Streaming</h3>
+            <img src="{{ url_for('main.gen_record') }}" width="100%">
+        </div>
+    </div>
+</div-->
+<table class="center" border="2">
+  <th>VIDEO</th><th>ACTION</th>
+  <tr>
+    <td  colspan = '2'>
+          <h1 class="mt-5">CCTV RECORDED VIDEOS</h1>
+    </td>
+  </tr>
+    {% for file in files %}
+    <tr>
+      <td>{{ file }}</td>
+      <td><a href="{{ url_for('main.play_video', video = file ) }}" target="_blank">Play</a></td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

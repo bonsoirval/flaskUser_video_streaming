@@ -109,8 +109,3 @@ def init_email_error_handler(app):
     app.logger.addHandler(mail_handler)
 
     # Log errors using: app.logger.error('Some error message')
-
-
-
-
-
