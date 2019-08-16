@@ -26,7 +26,7 @@ main_blueprint = Blueprint('main', __name__, template_folder='templates')
 @login_required
 def play_video(video):
     video_file = dirpath = os.getcwd() + '/videos/' + video
-    play_videoFile(video_file,mirror=False)
+    play_videoFile(video_file, mirror=False)
     '''print("The video is : " + video)
     cap = cv2.VideoCapture('video')
     while (cap.isOpened()):
@@ -66,6 +66,7 @@ def list_recorded_videos():
     operating_system = platform.system()
 
     if operating_system == 'Linux':
+        import os
         dirpath = os.getcwd() + '/videos' #get the video directory or folder
 
         files = next(os.walk(dirpath))[2]
@@ -172,13 +173,20 @@ def gen_record():
     out = cv2.VideoWriter('videos/record_' + str(unique_filename) +'.avi',fourcc, 20.0, (640,480))
     while(cap.isOpened()):
       ret, frame = cap.read()
+      face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+      # Convert into grayscale
+      gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
       if ret==True:
         frame = cv2.flip(frame,0)
         # write the flipped frame
-        out.write(frame)
-        cv2.imshow('Live Stream Video',frame)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-          break
+        # Draw rectangle around the faces
+        faces = face_cascade.detectMultiScale(gray, 1.1, 4)
+        for (x, y, w, h) in faces:
+            cv2.rectangle(img, (x, y), (x+w, y+h), (255, 0, 0), 2)
+            out.write(frame)
+            cv2.imshow('Live Stream Video',frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+              break
       else:
         break
     # Release everything if job is finished
